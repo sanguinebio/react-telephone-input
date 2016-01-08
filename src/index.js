@@ -18,6 +18,7 @@ var trim = require('lodash/string/trim');
 var startsWith = require('lodash/string/startsWith');
 
 var React = require('react');
+var ReactDOM = require('react-dom');
 var onClickOutside = require('react-onclickoutside');
 var classNames = require('classnames');
 var countryData = require('./country_data');
@@ -53,8 +54,8 @@ function isNumberValid(inputNumber) {
 
 var ReactTelephoneInput = React.createClass({
     mixins: [onClickOutside],
-    getInitialState() {
-        var inputNumber = this.props.value || '';
+    getInitialState(newInputValue) {
+        var inputNumber = newInputValue || this.props.value || '';
         var selectedCountryGuess = this.guessSelectedCountry(inputNumber.replace(/\D/g, ''));
         var selectedCountryGuessIndex = findIndex(allCountries, selectedCountryGuess);
         var formattedNumber = this.formatNumber(inputNumber.replace(/\D/g, ''), selectedCountryGuess ? selectedCountryGuess.format : null);
@@ -97,6 +98,12 @@ var ReactTelephoneInput = React.createClass({
             onEnterKeyPress: function () {}
         };
     },
+    shouldComponentUpdate(nextProps) {
+      if (nextProps.value !== this.props.value) {
+        this.setState(getInitialState(nextProps.value));
+      }
+      return true;
+    },
     getNumber() {
         return this.state.formattedNumber !== '+' ? this.state.formattedNumber : '';
     },
@@ -119,7 +126,7 @@ var ReactTelephoneInput = React.createClass({
             return;
         }
 
-        var container = this.refs.flagDropdownList.getDOMNode();
+        var container = ReactDOM.findDOMNode(this.refs.flagDropdownList);
 
         if(!container) {
           return;
@@ -187,7 +194,7 @@ var ReactTelephoneInput = React.createClass({
 
     // put the cursor to the end of the input (usually after a focus event)
     _cursorToEnd(skipFocus) {
-        var input = this.refs.numberInput.getDOMNode();
+        var input = ReactDOM.findDOMNode(this.refs.numberInput);
         if (skipFocus) {
             this.handleInputFocus();
         } else {
@@ -226,7 +233,7 @@ var ReactTelephoneInput = React.createClass({
         return bestGuess;
     }),
     getElement(index) {
-        return this.refs[`flag_no_${index}`].getDOMNode();
+        return ReactDOM.findDOMNode(this.refs[`flag_no_${index}`]);
     },
     handleFlagDropdownClick() {
         // need to put the highlight on the current selected country if the dropdown is going to open up
@@ -285,7 +292,7 @@ var ReactTelephoneInput = React.createClass({
                 }
 
                 if(caretPosition > 0 && oldFormattedText.length >= formattedNumber.length) {
-                    this.refs.numberInput.getDOMNode().setSelectionRange(caretPosition, caretPosition);
+                    ReactDOM.findDOMNode(this.refs.numberInput).setSelectionRange(caretPosition, caretPosition);
                 }
             }
 
@@ -323,7 +330,7 @@ var ReactTelephoneInput = React.createClass({
     },
     handleInputFocus() {
         // if the input is blank, insert dial code of the selected country
-        if(this.refs.numberInput.getDOMNode().value === '+') {
+        if(ReactDOM.findDOMNode(this.refs.numberInput).value === '+') {
             this.setState({formattedNumber: '+' + this.state.selectedCountry.dialCode});
         }
     },
